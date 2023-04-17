@@ -1,0 +1,9 @@
+#!/bin/sh
+if [ $# -le 2 ]; then 
+echo call: rename from to files; exit; 
+fi
+FROM="$1"
+TO="$2"
+shift
+shift
+for i in $@; do N=`echo "$i" | sed "s/$FROM/$TO/g"`; mv "$i" "$N"; done

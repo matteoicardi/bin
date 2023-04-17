@@ -1,0 +1,31 @@
+#!/usr/bin/csh
+
+set template=$1
+if ($template == '') then
+  echo 'Converting all PDF files to JPG'
+endif
+
+#--------
+# get list of files
+# assumes files to have .dat extension
+#--------
+unalias ls
+set filearray=(`ls *${template}*.pdf`)
+
+set nfiles=`echo $filearray | wc -w`
+if ($nfiles == 0) then
+  echo 'No PDF files detected'
+  exit(1)
+endif
+
+#--------
+# convert each file
+#--------
+foreach tmpfile ($filearray)
+  set jpgfile=`echo $tmpfile | sed s/'pdf'/'jpg'/g`
+  convert -crop 0x0 $tmpfile $jpgfile
+  echo 'finished converting' $tmpfile
+end
+echo ' '
+exit(0)
+

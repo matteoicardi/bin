@@ -1,0 +1,4 @@
+#!/bin/bash
+# clippaste - Paste contents of clipboard to file in terminal.
+
+pbpaste > $1
