@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
 
 gs	-q -dNOPAUSE -dBATCH -dSAFER \
 	-sPAPERSIZE=a4 \

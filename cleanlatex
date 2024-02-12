@@ -1,1 +1,2 @@
-rm -f *.brf *.thm *.nls *.ilg *.spl *.lof *.fff *.xdv *.blg *.abs *.nlo *.bcf *.out *.toc *.aux *.log *synctex.gz *.nav *.snm *latexmk *.fls *.bbl
+#!/usr/bin/env bash
+rm -f i*.brf *.thm *.nls *.ilg *.spl *.lof *.fff *.xdv *.blg *.abs *.nlo *.bcf *.out *.toc *.aux *.log *synctex.gz *.nav *.snm *latexmk *.fls *.bbl

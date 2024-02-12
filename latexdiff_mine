@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# Check if the user provided two LaTeX file names (without extensions) as arguments
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 [old_latex_file_name] [new_latex_file_name]"
+    exit 1
+fi
+
+# Define the user-specified old and new LaTeX file names
+old_latex_file_name="$1"
+new_latex_file_name="$2"
+
+
+# Use latexpand to expand the old and new LaTeX files with the main.bbl file
+latexpand --expand-bbl "$old_latex_file_name".bbl "$old_latex_file_name".tex -o "$old_latex_file_name-expanded.tex"
+latexpand --expand-bbl "$new_latex_file_name".bbl "$new_latex_file_name".tex -o "$new_latex_file_name-expanded.tex"
+
+# Perform latexdiff on the expanded old and new LaTeX files
+latexdiff "$old_latex_file_name-expanded.tex" "$new_latex_file_name-expanded.tex" --flatten --graphics-markup=2 --enable-citation-markup --ignore-warnings > revision.tex
+
+echo "LaTeX files processed successfully."

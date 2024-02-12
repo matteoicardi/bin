@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 # cp2clip - copy to the clipboard the contents of a file
 
 cat $1 | pbcopy

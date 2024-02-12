@@ -8,7 +8,7 @@ import sys
 
 DEP_FILE = sys.argv[1]
 TARGET_DIR = sys.argv[2]
-EXTENSIONS = ['pdf', 'pdf_tex', 'png', 'jpg', 'jpeg', 'bbl', 'bib', 'tex']
+EXTENSIONS = ['cls', 'pdf', 'pdf_tex', 'png', 'jpg', 'jpeg', 'bbl', 'bib', 'tex']
 
 print("Extracting all dependencies of ", DEP_FILE, " and copying them in ", TARGET_DIR)
 
