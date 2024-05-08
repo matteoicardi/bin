@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# Check for required number of arguments
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <markdown_file> [<style_file>]"
+  exit 1
+fi
+
+# Get the input Markdown file and its filename
+markdown_file="$1"
+filename="${markdown_file%.*}"  # Remove extension for output filename
+
+# Optional style file (default is empty string)
+style_file="${2:-}"  # If no second argument, set to empty string
+
+# Command to convert using Pandoc
+pandoc_cmd="pandoc -t revealjs -s -o \"${filename}.html\" \"$markdown_file\" --mathjax  --reference-location=block --slide-level 3 --variable revealjs-url=https://unpkg.com/reveal.js@latest  --variable plugins="notes" --variable theme="white" --variable transition="fade" --variable controls="true" --variable progress="true" --variable history="true" --variable center="true" --variable slideNumber="true" --variable showNotes="false""
+
+# pandoc_cmd="pandoc -t revealjs -s -o \"${filename}.html\" \"$markdown_file\" --mathjax --slide-level 3  --variable plugins="notes" --variable theme="white" --variable transition="fade" --variable controls="true" --variable progress="true" --variable history="true" --variable center="true" --variable showNotes="false" --variable slideNumber="true" --variable showControls="true" --variable progress="false" --reference-location=block --toc --toc-depth=2"
+
+# Add style file reference if provided
+if [ ! -z "$style_file" ]; then
+  pandoc_cmd="$pandoc_cmd -c \"$style_file\""
+fi
+
+# Execute the Pandoc command
+eval "$pandoc_cmd"
+
+echo "Converted '${markdown_file}' to '${filename}.html'"
