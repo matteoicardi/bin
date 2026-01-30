@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+# Script to clean BibTeX files by removing specific fields (doi, url, issn)
+# NOTE: This script utilizes GNU sed features (specifically '\s' for whitespace).
+# It will attempt to use 'gsed' if available, otherwise 'sed'.
+# Ensure your 'sed' is the GNU version or install 'gnu-sed' (e.g., via Homebrew).
+
+set -euo pipefail
+
+# Determine which sed to use
+if command -v gsed &> /dev/null; then
+    SED_CMD="gsed"
+else
+    SED_CMD="sed"
+    # Optional: Check if 'sed' is actually GNU sed if gsed is not found
+    if ! $SED_CMD --version 2>&1 | grep -q "GNU"; then
+         echo "Warning: 'gsed' not found and default 'sed' may not be GNU." >&2
+         echo "This script uses '\s' regex which requires GNU sed." >&2
+    fi
+fi
+
+# Check if the user provided a filename
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $(basename "$0") <filename.bib>"
+  exit 1
+fi
+
+# Define the input file
+input_file="$1"
+
+# Check if input file exists
+if [ ! -f "$input_file" ]; then
+    echo "Error: File '$input_file' not found." >&2
+    exit 1
+fi
+
+# Construct output filename (handling paths correctly)
+# Example: "path/to/ref.bib" -> "path/to/cleaned_ref.bib"
+input_dir=$(dirname "$input_file")
+input_base=$(basename "$input_file")
+if [ "$input_dir" = "." ]; then
+  output_file="cleaned_${input_base}"
+else
+  output_file="${input_dir}/cleaned_${input_base}"
+fi
+
+
+echo "Cleaning '$input_file' -> '$output_file'..."
+
+# Use sed to delete lines containing 'doi =', 'url =', or 'issn ='
+# We use a temporary file to ensure atomic write or just simple redirection as requested.
+# Using redirection for simplicity as per original, but with safety.
+if $SED_CMD '/^\s*doi\s*=.*/d;/^\s*url\s*=.*/d;/^\s*issn\s*=.*/d' "$input_file" > "$output_file"; then
+    echo "Success! Cleaned file created: $output_file"
+else
+    echo "Error: Failed to process file." >&2
+    rm -f "$output_file"
+    exit 1
+fi

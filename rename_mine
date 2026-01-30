@@ -2,7 +2,23 @@
 
 # rename_mine - Batch rename files using sed substitution
 # Usage: rename_mine <from_pattern> <to_pattern> <files...>
+# NOTE: This script uses 'sed'. For consistent regex behavior (especially if using complex patterns),
+# GNU sed ('gsed') is preferred and will be used if available.
+
 echo "--- Running Matteo Icardi's handy script: rename_mine ---"
+
+# Determine which sed to use
+if command -v gsed &> /dev/null; then
+    SED_CMD="gsed"
+else
+    SED_CMD="sed"
+    # Optional: Check if 'sed' is actually GNU sed if gsed is not found
+    if ! $SED_CMD --version 2>&1 | grep -q "GNU"; then
+         # We only warn here because the user explicitly asked to highlight GNU diffs.
+         # Standard sed often works for simple renames, but complex patterns might differ.
+         echo "Note: Using default 'sed' (likely BSD). If using complex GNU regex, install 'gsed'." >&2
+    fi
+fi
 
 if [ $# -lt 3 ]; then 
     echo "Usage: $(basename "$0") <from_pattern> <to_pattern> <files...>"
@@ -15,7 +31,7 @@ TO="$2"
 shift 2
 
 for FILE in "$@"; do
-    NEW_NAME=$(echo "$FILE" | sed "s/$FROM/$TO/g")
+    NEW_NAME=$(echo "$FILE" | $SED_CMD "s/$FROM/$TO/g")
     
     if [ "$FILE" != "$NEW_NAME" ]; then
         echo "Renaming '$FILE' -> '$NEW_NAME'"
