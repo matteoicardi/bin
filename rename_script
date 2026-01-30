@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+# rename_script - Interactive renamer for files in subdirectories
+echo "--- Running Matteo Icardi's handy script: rename_script ---"
+
+# Check if running on macOS for QuickLook support
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    echo "Warning: This script is optimized for macOS (uses qlmanage for preview)."
+fi
+
+# Iterate over directories in the current folder
+for DIR in */ ; do
+    # Check if glob matched nothing
+    [ -d "$DIR" ] || continue
+    
+    # Remove trailing slash for display
+    DIR_NAME="${DIR%/}"
+    echo "=========================================="
+    echo "Entering directory: $DIR_NAME"
+    echo "=========================================="
+
+    pushd "$DIR" > /dev/null
+
+    # Enable nullglob to handle empty directories
+    shopt -s nullglob
+    FILES=(*)
+    shopt -u nullglob
+
+    for FILE in "${FILES[@]}"; do
+        [ -f "$FILE" ] || continue
+
+        # Calculate clean name: replace spaces with underscores, remove quotes
+        CLEAN_NAME=$(echo "$FILE" | tr ' ' '_')
+        
+        # Display current and proposed name
+        echo "--------------------------------------------------"
+        echo "File: $FILE"
+        echo "Auto-Rename Proposal: $CLEAN_NAME"
+        
+        # Open preview using QuickLook in background
+        qlmanage -p "$FILE" >/dev/null 2>&1 &
+        PREVIEW_PID=$!
+
+        echo "Options:"
+        echo "  [y] Enter custom name"
+        echo "  [n] Accept Proposal (Auto-rename)"
+        echo "  [s] Skip"
+        read -p "Selection [y/n/s]: " ANS
+
+        # Kill preview
+        kill "$PREVIEW_PID" 2>/dev/null
+        wait "$PREVIEW_PID" 2>/dev/null
+
+        case "$ANS" in
+            y|Y)
+                read -p "Enter new name: " NEW_MANUAL_NAME
+                if [ -n "$NEW_MANUAL_NAME" ]; then
+                    mv -v "$FILE" "$NEW_MANUAL_NAME"
+                else
+                    echo "Empty name provided. Skipping."
+                fi
+                ;;
+            n|N)
+                if [ "$FILE" != "$CLEAN_NAME" ]; then
+                    mv -v "$FILE" "$CLEAN_NAME"
+                else
+                    echo "Name is already clean."
+                fi
+                ;;
+            s|S)
+                echo "Skipped."
+                ;;
+            *)
+                echo "Invalid selection. Skipping."
+                ;;
+        esac
+    done
+
+    popd > /dev/null
+done
+
+echo "Finished processing subdirectories."

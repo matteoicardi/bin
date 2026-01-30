@@ -1,3 +1,12 @@
-docker start $1
-docker exec -ti -u $1 $1 /bin/bash
+#!/usr/bin/env bash
+
+echo "--- Running Matteo Icardi's handy script: docker_start_exec ---"
+
+if [ -z "$1" ]; then
+    echo "Usage: $(basename "$0") <container_name_and_user>"
+    exit 1
+fi
+
+docker start "$1"
+docker exec -ti -u "$1" "$1" /bin/bash
 

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+echo "--- Running Matteo Icardi's handy script: pdfreducesizenew ---"
+
+if ! command -v convert &> /dev/null; then
+    echo "Error: 'convert' (ImageMagick) is not installed." >&2
+    exit 1
+fi
+
+if [ -z "$1" ]; then
+    echo "Usage: $(basename "$0") <input.pdf>"
+    exit 1
+fi
+
+INPUT_FILE="$1"
+OUTPUT_FILE="out.pdf"
+
+echo "Reducing size (IM) of '$INPUT_FILE' -> '$OUTPUT_FILE'..."
+
+convert -background white -density 200x200 -quality 60 -compress jpeg "$INPUT_FILE" "$OUTPUT_FILE"
+
+echo "Done."
+

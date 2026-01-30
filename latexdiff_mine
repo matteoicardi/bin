@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 
+echo "--- Running Matteo Icardi's handy script: latexdiff_mine ---"
+
+# Check for required commands
+for cmd in latexpand latexdiff; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "Error: '$cmd' is not installed or not in PATH." >&2
+        exit 1
+    fi
+done
+
 # Check if the user provided two LaTeX file names (without extensions) as arguments
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 [old_latex_file_name] [new_latex_file_name]"
+    echo "Usage: $(basename "$0") <old_latex_file_name> <new_latex_file_name>"
+    echo "Note: Provide filenames without extensions (assumes .tex)"
     exit 1
 fi
 
@@ -10,12 +21,16 @@ fi
 old_latex_file_name="$1"
 new_latex_file_name="$2"
 
-
 # Use latexpand to expand the old and new LaTeX files with the main.bbl file
-latexpand --expand-bbl "$old_latex_file_name".bbl "$old_latex_file_name".tex -o "$old_latex_file_name-expanded.tex"
-latexpand --expand-bbl "$new_latex_file_name".bbl "$new_latex_file_name".tex -o "$new_latex_file_name-expanded.tex"
+echo "Expanding $old_latex_file_name..."
+latexpand --expand-bbl "${old_latex_file_name}.bbl" "${old_latex_file_name}.tex" -o "${old_latex_file_name}-expanded.tex"
+
+echo "Expanding $new_latex_file_name..."
+latexpand --expand-bbl "${new_latex_file_name}.bbl" "${new_latex_file_name}.tex" -o "${new_latex_file_name}-expanded.tex"
 
 # Perform latexdiff on the expanded old and new LaTeX files
-latexdiff "$old_latex_file_name-expanded.tex" "$new_latex_file_name-expanded.tex" --flatten --graphics-markup=2 --enable-citation-markup --ignore-warnings > revision.tex
+echo "Generating revision.tex..."
+latexdiff "${old_latex_file_name}-expanded.tex" "${new_latex_file_name}-expanded.tex" \
+    --flatten --graphics-markup=2 --enable-citation-markup --ignore-warnings > revision.tex
 
-echo "LaTeX files processed successfully."
+echo "LaTeX files processed successfully. Output: revision.tex"

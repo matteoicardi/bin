@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
 # clippaste - Paste contents of clipboard to file in terminal.
+echo "--- Running Matteo Icardi's handy script: clippaste ---"
 
-pbpaste > $1
+if [ -z "$1" ]; then
+    echo "Usage: $(basename "$0") <output_file>"
+    exit 1
+fi
+
+pbpaste >> "$1"

@@ -1,0 +1,42 @@
+#!/bin/bash
+set -e
+
+echo "--- Running Matteo Icardi's handy script: pdf2txt_ai ---"
+
+# Check dependencies
+for cmd in pdftoppm tesseract; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "Error: '$cmd' is not installed." >&2
+        exit 1
+    fi
+done
+
+if [ -z "$1" ]; then
+    echo "Usage: $(basename "$0") <input.pdf>"
+    exit 1
+fi
+
+PDF="$1"
+BASENAME="$(basename "$PDF" .pdf)"
+WORKDIR="$(mktemp -d)"
+
+# 1. Convert PDF to images (300 DPI, grayscale)
+echo "Converting PDF to images..."
+pdftoppm -r 300 -gray "$PDF" "$WORKDIR/page"
+
+# 2. OCR each page (PSM 6 = uniform blocks, best for boxes/forms)
+echo "Performing OCR (this may take a while)..."
+for img in "$WORKDIR"/page-*.pgm; do
+  tesseract "$img" "${img%.pgm}" \
+    --psm 6 \
+    -l eng+ita \
+    txt > /dev/null 2>&1
+done
+
+# 3. Concatenate pages in order
+cat "$WORKDIR"/page-*.txt > "${BASENAME}.txt"
+
+# 4. Cleanup
+rm -rf "$WORKDIR"
+
+echo "Output: ${BASENAME}.txt"

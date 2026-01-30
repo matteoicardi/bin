@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 
+echo "--- Running Matteo Icardi's handy script: md2revealjs ---"
+
+# Check for pandoc
+if ! command -v pandoc &> /dev/null; then
+    echo "Error: 'pandoc' is not installed." >&2
+    exit 1
+fi
+
 # Check for required number of arguments
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <markdown_file> [<style_file>]"
+  echo "Usage: $(basename "$0") <markdown_file> [<style_file>]"
   exit 1
 fi
 
@@ -13,17 +21,33 @@ filename="${markdown_file%.*}"  # Remove extension for output filename
 # Optional style file (default is empty string)
 style_file="${2:-}"  # If no second argument, set to empty string
 
-# Command to convert using Pandoc
-pandoc_cmd="pandoc -t revealjs -s -o \"${filename}.html\" \"$markdown_file\" --mathjax  --reference-location=block --slide-level 3 --variable revealjs-url=https://unpkg.com/reveal.js@latest  --variable plugins="notes" --variable theme="white" --variable transition="fade" --variable controls="true" --variable progress="true" --variable history="true" --variable center="true" --variable slideNumber="true" --variable showNotes="false""
-
-# pandoc_cmd="pandoc -t revealjs -s -o \"${filename}.html\" \"$markdown_file\" --mathjax --slide-level 3  --variable plugins="notes" --variable theme="white" --variable transition="fade" --variable controls="true" --variable progress="true" --variable history="true" --variable center="true" --variable showNotes="false" --variable slideNumber="true" --variable showControls="true" --variable progress="false" --reference-location=block --toc --toc-depth=2"
+# Define command options using an array for safety
+pandoc_opts=(
+  -t revealjs
+  -s
+  -o "${filename}.html"
+  "$markdown_file"
+  --mathjax
+  --reference-location=block
+  --slide-level 2
+  --variable revealjs-url=https://unpkg.com/reveal.js@latest
+  --variable plugins="notes"
+  --variable theme="white"
+  --variable transition="fade"
+  --variable controls="true"
+  --variable progress="true"
+  --variable history="true"
+  --variable center="true"
+  --variable slideNumber="true"
+  --variable showNotes="false"
+)
 
 # Add style file reference if provided
-if [ ! -z "$style_file" ]; then
-  pandoc_cmd="$pandoc_cmd -c \"$style_file\""
+if [ -n "$style_file" ]; then
+  pandoc_opts+=(-c "$style_file")
 fi
 
 # Execute the Pandoc command
-eval "$pandoc_cmd"
+pandoc "${pandoc_opts[@]}"
 
 echo "Converted '${markdown_file}' to '${filename}.html'"

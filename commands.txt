@@ -1,239 +1,205 @@
-﻿scp -r TransATMesh icardi@ascomp.ethz.ch:/home/icardi/ #copia files
-sftp  #copia files
+# ==============================================================================
+#  USEFUL COMMANDS MEMORANDUM
+#  Platform: macOS / Linux (Bash/Zsh)
+# ==============================================================================
 
-ssh -Y icardi@ascomp.ethz.ch #ssh
+# ------------------------------------------------------------------------------
+#  FILE OPERATIONS & SEARCH
+# ------------------------------------------------------------------------------
+# Find files by name
+find . -name "filename*"
 
-du -sh *    #dimensioni cartelle
+# Find and delete
+find . -name "FILE-TO-FIND" -exec rm -rf {} \;
 
-tkcvs #visual CVS
-cvs checkout/update/status/release -d directory name#CVS
-chmod ugoa+-rwx #permessi
-chown  #proprietario
-nohup exec » out &  #background execution
-ps -u icardi  #processi
+# Find and replace text in files (sed)
+# macOS requires empty string '' after -i for backup extension
+find . -name "*.php" -print0 | xargs -0 sed -i '' 's/foo/bar/g'
+# Linux version: find . -name "*.php" -print0 | xargs -0 sed -i 's/foo/bar/g'
 
-ssh-keygen -t dsa #crea la chiave pubblica. copiare in .ssh/authorized_keys
-sshfs ascomp.ethz.ch: ~/mount/ #monta disco tramite ssh
-fusermount -u mount
+# Parallel execution with xargs (e.g., gzip all .vtk files using 4 cores)
+find . -iname '*.vtk' -print0 | xargs -0 -n 1 -P 4 gzip
 
-valgrind --leak-check=yes bin/transatmesh
+# Check directory size (human readable)
+du -sh *
 
-symbolic link
-ln -s $PWD/g95-install/bin/*g95* ~/bin/g95
+# Sync directories (better than cp for large transfers)
+# -a: archive mode, -v: verbose, --delete: delete dest files not in source
+rsync -av --delete source_dir/ dest_dir/
 
-find /home/david -name 'index*'
+# Sync only 1st level of folder, exclude depth>1
+rsync -uvapt --exclude '/*/*/' ./ /path/to/destination/
 
-ldd executable  #dynamic libraries linked
+# Symbolic link (ln -s target link_name)
+ln -s /path/to/real/folder ~/bin/linkname
 
-unison -ignorecase true -perms 0
+# Copy to clipboard (macOS)
+pbcopy < file.txt
+pbpaste > newfile.txt
 
-tar -czvf file.tgz pippo pippo2  # -cjvf
-tar -xzvf file.tgz
+# Extract single line of a file
+sed -n '1p' file.txt        # Print line 1
+sed -n '2,4p' file.txt      # Print lines 2-4
 
-rsync -ruv --delete source dest
-
-pdftk in*.pdf cat output.pdf
-
-find . -name "FILE-TO-FIND"-exec rm -rf {} \;
-
-sftp d021064@web03.polito.it
-
-apropos * | egrep "\((1|6|8)" | sort » command_list   #find command
-
-X :1 -query «hostname»  #as root
-#remote login, require firewall expection and tick Allow remote Graphical Login (Suse)
-#then run on server as root
-rcxdm restart
-
-# latex math expression to gif image
-mimetex -f latex_expr -e prova.gif -s 25
-
-chmod 0600 $(find . ! -type d)
-
-sudo shutdown -h +120 (2 ore dopo)
-
-# problem in gnome panel OAFIID
-# add these lines to the applet
-import time
-time.sleep(8)
-
-# mount ssh
-sshfs -o idmap=user bolle: mnt
-
-# find and replace in files
-find . -name "*.php" -print | xargs sed -i 's/foo/bar/g'
-
-# run gzip or others in parallel
-find . -iname '*.vtk' | xargs -n 1 -P 4 gzip
-
-# run matlab without GUI (try one of the following)
-unset DISPLAY
-matlab -nodisplay
-matlab -nodesktop -nosplash -nojvm -r HOMISBOLTZ
-nohup matlab < script.m > out &
-
-# sudo without password
-sudo visudo
-# add the line assuming group icardi
-icardi ALL=NOPASSWD: ALL
-
-detox — clean up filenames
-
-#VNC on secure ssh
-ssh -L 5900:localhost:5900 joe@laptop
-vinagre localhost
-ssh -t -L 5900:localhost:5900 icardi@terence 'x11vnc -localhost -nolookup -nopw -display :0'
-vncviewer localhost:0
-
-#VNC server
-x11vnc
-krfb
-
-#VNC client
-krdc
-vinagre
-
-#Remote desktop from linux to windows
-rdesktop ip_address
-
-#RDP desktop client
-remmina
-tsclient
-
-#RDP server
-xrdp
-
-#VNC from windows to linux
-run putty to linux, In the Tunnels section of PuTTY, type 5902 for Source port, localhost:5900 for Destination
-run tightvnc in windows to localhost::5902
-
-
-#Remote windows share
-create tunnel with LocalForward 2222 impact.polito.it:445
-sudo smbmount //localhost/lavori lavori -o user=matteo.icardi,pass=Mat_2012,port=2222,dom=groundwater
-
-# make symbolic .h file to .H
-# create .h links to all .H files below the current dir
-for basename in `find . -name *.H | sed 's/\(.*\)\..*/\1/'`; do
-  ln -s $basename.H $basename.h
-done
-
-#duplicates
-fdupes
-
-# block brute force attacks /var/log/warn or /var/log/messages
-iptables -I INPUT -s 178.211.43.54 -j DROP
-
-# set network from shell
-ifconfig eth0 up 192.168.1.5 netmask 255.255.255.0
-route add default gw 192.168.1.1
-sudo vi /etc/resolv.conf
-     nameserver 208.67.222.222
-     nameserver 208.67.220.220
-
-#chroot
-mount /dev/sda3 /mnt
-mount --bind /dev /mnt/dev
-chroot /mnt
-mount --bind /proc
-mount --bind /sys
-
-#extract single line of a file
-sed '1!d' somefile.txt
-sed -n 1p somefile.txt
-sed -n 2,4p somefile.txt
-sed '2,4!d' somefile.txt
-
-#rename files with folder name
-for file in /home/user/temps/*/thumb.png; do new_file=${file/temps/new_folder}; cp "$file" "${new_file/\/thumb/}"; done;
-
-#rsync only 1st level of folder, exclude depth>1
-rsync -uvapt --exclude '/*/*/' ./ /media/Icardi/openfoam/
-
-#find all available commands, executable, alias
-compgen -ac | grep searchstr
-
-
-# reduce pdf size
-convert -colorspace GRAY color.pdf gray.pdf
-gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dNOPAUSE -dQUIET -dBATCH -sOutputFile=output.pdf input.pdf
-
-convert input.pdf -compress Zip output.pdf  #(lossy)
-
-gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dNOPAUSE -dQUIET -dBATCH -sOutputFile=output.pdf input.pdf
-
-qpdf --linearize input.pdf output.pdf
-
-pdf2ps large.pdf very_large.ps
-ps2pdf very_large.ps small.pdf
-
-# rotate screen
-xrandr -o left|right|normal|inverted
-
-
-# set proxy
-1) dconf-editor system
-2) gsettings set org.gnome.system.proxy mode 'none'
-3) /etc/environment
-4) /etc/profile
-5) /etc/apt/apt.conf
-6) /etc/resolv.conf
-
-RAM memory MOUNT POINT
-/dev/shm
-
-
-# SUDO keep ENV variables
-sudo -E
-
-
-# Download entire website
-wget --wait=20 --limit-rate=20K -r -p --no-parent -U Mozilla http://www.stupidsite.com/restricedplace.html
-
-# copy files in different folders with same name
-for i in *; do if [[ -d $i ]]; then cp $i/magU.x $(printf "pdfU%07d" $i); fi; done
-
-# make files inherit folder permissions
-sudo setfacl -Rdm g:groupname:rwx somedir
-sudo chmod g+S somedir
-
-# git non bare repo
-git config receive.denyCurrentBranch updateInstead
-
-#create movie
-ffmpeg -i composite.%04d.png -c:v libx264 -pix_fmt yuv420p composite.mp4
-ffmpeg -i coarsening.%04d.png -vf scale=320:-1 -r 10 output.gif
-magick output.gif -fuzz 20% -layers Optimize out.gif
-gifsicle -i output.gif --optimize=3 -o output-opt.gif
-
-#docker
-docker rm $(docker ps --all -q -f status=exited)
-docker -u 0 -it CONTAINER_ID bash
-docker commit
-docker ps -a
-docker run -t -d  -p 8888:8888 myfenics
-docker exec -i -t 0579 jupyter notebook --ip 0.0.0.0 --no-browser --allow-root
-
-pdfjoin --rotateoversize false
-
-  #telebit
-  export proxy_cmd='openssl s_client -connect %h:443 -servername %h -quiet'
-  # then run ssh -o ProxyCommand="$proxy_cmd" multiform@itchy-horse-21.telebit.io
-
-# jupyter remotely
-jupyter notebook --no-browser --port=8888
-ssh -N -f -L localhost:8888:localhost:8888 remoteuser@remotehost
-
-# replace tabs with spaces
+# Replace tabs with spaces (recursive)
 find . -name '*.java' ! -type d -exec bash -c 'expand -t 4 "$0" > /tmp/e && mv /tmp/e "$0"' {} \;
 
-#add user
-sudo adduser –disabled-password pmznmm
-sudo usermod -aG sudo,adm pmznmm
+# Batch rename (replace spaces with underscores in current dir)
+for f in *; do mv "$f" "${f// /_}"; done
 
-#gmsh M1
+# ------------------------------------------------------------------------------
+#  SYSTEM & PROCESSES
+# ------------------------------------------------------------------------------
+# Process list (user specific)
+ps -u $USER
+
+# Dynamic libraries linked
+otool -L executable  # macOS
+ldd executable       # Linux
+
+# Run in background and keep running after logout
+nohup ./script.sh > output.log 2>&1 &
+
+# Watch a command (e.g., check size every 2 seconds)
+watch -n 2 "du -sh output.dat"
+
+# Sudo without password (edit /etc/sudoers)
+sudo visudo
+# Add: username ALL=(ALL) NOPASSWD: ALL
+
+# ------------------------------------------------------------------------------
+#  NETWORKING & SSH
+# ------------------------------------------------------------------------------
+# SSH with X11 forwarding (for GUI apps)
+ssh -Y user@host
+
+# SSH Key generation
+ssh-keygen -t ed25519 -C "comment"
+
+# Copy public key to server (enable passwordless login)
+ssh-copy-id user@host
+
+# Mount remote folder via SSH (Requires MacFUSE/sshfs)
+sshfs user@host:/remote/path ~/local/mountpoint
+umount ~/local/mountpoint  # Unmount
+
+# Download entire website (recursive, no parent, wait to be polite)
+wget --wait=20 --limit-rate=20K -r -p --no-parent -U Mozilla http://example.com
+
+# Check for open ports/listeners
+lsof -i -P | grep LISTEN
+
+# Jupyter Notebook Remote Tunneling
+# 1. On Remote:
+# jupyter notebook --no-browser --port=8888
+# 2. On Local:
+ssh -N -f -L localhost:8888:localhost:8888 user@remotehost
+# 3. Open localhost:8888 in browser
+
+# ------------------------------------------------------------------------------
+#  GIT & VERSION CONTROL
+# ------------------------------------------------------------------------------
+# Config for non-bare repo receiving pushes
+git config receive.denyCurrentBranch updateInstead
+
+# Undoing the last commit (keep changes in working dir)
+git reset --soft HEAD~1
+
+# Visual history
+git log --graph --oneline --all --decorate
+
+# ------------------------------------------------------------------------------
+#  DOCKER
+# ------------------------------------------------------------------------------
+# List all containers (including stopped)
+docker ps -a
+
+# Enter a running container
+docker exec -it <container_id> bash
+
+# Clean up: Remove all stopped containers
+docker container prune
+
+# Clean up: Remove dangling images
+docker image prune
+
+# Run Jupyter in Docker with port mapping
+docker run -p 8888:8888 -v $(pwd):/home/jovyan/work jupyter/scipy-notebook
+
+# Commit state of container to new image
+docker commit <container_id> new_image_name
+
+# ------------------------------------------------------------------------------
+#  PDF & IMAGE PROCESSING
+# ------------------------------------------------------------------------------
+# Reduce PDF size (Ghostscript)
+gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook \
+   -dNOPAUSE -dQUIET -dBATCH -sOutputFile=small.pdf large.pdf
+# PDFSETTINGS: /screen (lowest), /ebook (medium), /printer (high), /prepress (best)
+
+# Linearize PDF (Fast Web View)
+qpdf --linearize input.pdf output.pdf
+
+# Rotate PDF pages (requires pdfjam/texlive)
+pdfjoin --rotateoversize false input.pdf
+
+# Convert images to video (FFmpeg)
+ffmpeg -r 10 -i image.%04d.png -c:v libx264 -pix_fmt yuv420p output.mp4
+
+# Create GIF from images
+ffmpeg -i image.%04d.png -vf scale=320:-1 -r 10 output.gif
+# Optimize GIF
+gifsicle -i output.gif --optimize=3 -o output-opt.gif
+
+# ------------------------------------------------------------------------------
+#  LATEX
+# ------------------------------------------------------------------------------
+# Generate diff between two latex files
+# Requires: latexpand, latexdiff
+latexpand --expand-bbl main.bbl main.tex -o flat_new.tex
+latexpand --expand-bbl old.bbl old.tex -o flat_old.tex
+latexdiff flat_old.tex flat_new.tex --flatten > diff.tex
+
+# ------------------------------------------------------------------------------
+#  PYTHON / PIP
+# ------------------------------------------------------------------------------
+# Install GMSH Python API
 pip install -i https://gmsh.info/python-packages-dev --force-reinstall --no-cache-dir gmsh
 
-#latexdiff
-latexpand --expand-bbl main.bbl main.tex -o all-in-one.tex
-latexdiff old/main.tex upscaling_reaction/main.tex --flatten --graphics-markup=2 --enable-citation-markup --ignore-warnings > revision.tex
+# ==============================================================================
+#  LINUX ONLY COMMANDS
+# ==============================================================================
+
+# Memory usage
+free -h
+
+# Check IP address (modern Linux)
+ip addr show
+
+# Block IP with iptables
+iptables -I INPUT -s 178.211.43.54 -j DROP
+
+# Valgrind (Memory leak check)
+valgrind --leak-check=yes ./executable
+
+# Chroot environment
+mount /dev/sda3 /mnt
+mount --bind /dev /mnt/dev
+mount --bind /proc /mnt/proc
+mount --bind /sys /mnt/sys
+chroot /mnt
+
+# Remote Desktop (RDP) from Linux to Windows
+rdesktop -u username -p password -g 1024x768 ip_address
+# or use: remmina
+
+# VNC Server
+x11vnc -localhost -nolookup -nopw -display :0
+
+# Mount Windows Share (SMB)
+mount -t cifs //server/share /mnt/mountpoint -o user=username,password=pass
+# or: smbmount //server/share /mnt/mountpoint ...
+
+# Set network interface (Legacy)
+ifconfig eth0 192.168.1.5 netmask 255.255.255.0 up
+route add default gw 192.168.1.1

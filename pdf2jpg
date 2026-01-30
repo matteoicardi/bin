@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# pdf2jpg - Convert PDF files to JPG using ImageMagick
+# Usage: pdf2jpg [match_pattern]
+echo "--- Running Matteo Icardi's handy script: pdf2jpg ---"
+
+TEMPLATE="${1:-}"
+
+# Check for required command
+if ! command -v convert &> /dev/null; then
+    echo "Error: 'convert' (ImageMagick) is not installed." >&2
+    exit 1
+fi
+
+if [ -z "$TEMPLATE" ]; then
+    echo "Converting all PDF files to JPG..."
+    PATTERN="*.pdf"
+else
+    echo "Converting PDF files matching '*${TEMPLATE}*' to JPG..."
+    PATTERN="*${TEMPLATE}*.pdf"
+fi
+
+# Enable nullglob so the loop doesn't run on the literal pattern string if no matches found
+shopt -s nullglob
+FILES=($PATTERN)
+shopt -u nullglob
+
+if [ ${#FILES[@]} -eq 0 ]; then
+    echo "No PDF files detected matching: $PATTERN"
+    exit 1
+fi
+
+for FILE in "${FILES[@]}"; do
+    JPG_FILE="${FILE%.pdf}.jpg"
+    echo "Converting '$FILE' -> '$JPG_FILE'..."
+    convert -crop 0x0 "$FILE" "$JPG_FILE"
+done
+
+echo "Done."

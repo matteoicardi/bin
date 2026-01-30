@@ -1,10 +1,24 @@
 #!/usr/bin/env bash
 
-if [ $# -le 2 ]; then 
-echo call: rename from to files; exit; 
+# rename_mine - Batch rename files using sed substitution
+# Usage: rename_mine <from_pattern> <to_pattern> <files...>
+echo "--- Running Matteo Icardi's handy script: rename_mine ---"
+
+if [ $# -lt 3 ]; then 
+    echo "Usage: $(basename "$0") <from_pattern> <to_pattern> <files...>"
+    echo "Example: $(basename "$0") ' ' '_' *.pdf"
+    exit 1 
 fi
+
 FROM="$1"
 TO="$2"
-shift
-shift
-for i in $@; do N=`echo "$i" | sed "s/$FROM/$TO/g"`; mv "$i" "$N"; done
+shift 2
+
+for FILE in "$@"; do
+    NEW_NAME=$(echo "$FILE" | sed "s/$FROM/$TO/g")
+    
+    if [ "$FILE" != "$NEW_NAME" ]; then
+        echo "Renaming '$FILE' -> '$NEW_NAME'"
+        mv "$FILE" "$NEW_NAME"
+    fi
+done

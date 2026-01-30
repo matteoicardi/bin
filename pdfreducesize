@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+echo "--- Running Matteo Icardi's handy script: pdfreducesize ---"
+
+if ! command -v gs &> /dev/null; then
+    echo "Error: 'gs' (Ghostscript) is not installed." >&2
+    exit 1
+fi
+
+if [ -z "$1" ]; then
+    echo "Usage: $(basename "$0") <input.pdf>"
+    exit 1
+fi
+
+INPUT_FILE="$1"
+OUTPUT_FILE="out.pdf"
+
+echo "Reducing size of '$INPUT_FILE' -> '$OUTPUT_FILE'..."
+
+gs -q -dNOPAUSE -dBATCH -dSAFER \
+	-sPAPERSIZE=a4 \
+	-sDEVICE=pdfwrite \
+	-dCompatibilityLevel=1.3 \
+	-dPDFSETTINGS=/screen \
+	-dEmbedAllFonts=true \
+	-dSubsetFonts=true \
+	-dColorImageDownsampleType=/Bicubic \
+	-dColorImageResolution=120 \
+	-dGrayImageDownsampleType=/Bicubic \
+	-dGrayImageResolution=120 \
+	-dMonoImageDownsampleType=/Bicubic \
+	-dMonoImageResolution=120 \
+	-sOutputFile="$OUTPUT_FILE" \
+	"$INPUT_FILE"
+
+echo "Done."

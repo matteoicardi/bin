@@ -1,0 +1,40 @@
+#!/bin/bash
+set -e
+
+echo "--- Running Matteo Icardi's handy script: pdf2txt_ai_raw ---"
+
+# Check dependencies
+for cmd in pdftoppm tesseract; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "Error: '$cmd' is not installed." >&2
+        exit 1
+    fi
+done
+
+if [ -z "$1" ]; then
+    echo "Usage: $(basename "$0") <input.pdf>"
+    exit 1
+fi
+
+PDF="$1"
+BASENAME="$(basename "$PDF" .pdf)"
+WORKDIR="$(mktemp -d)"
+
+echo "Converting PDF to images (High Res)..."
+pdftoppm -r 400 "$PDF" "$WORKDIR/page"
+
+echo "Performing OCR (Raw Stream)..."
+# Clear output file if exists
+> "${BASENAME}.txt"
+
+for img in "$WORKDIR"/page-*.ppm; do
+  tesseract "$img" stdout \
+    --psm 11 \
+    -l eng+ita \
+    2>/dev/null >> "${BASENAME}.txt"
+  echo -e "\n\n----- PAGE BREAK -----\n\n" >> "${BASENAME}.txt"
+done
+
+rm -rf "$WORKDIR"
+
+echo "Output: ${BASENAME}.txt"

@@ -1,2 +1,7 @@
 #!/usr/bin/env bash
-rm -f *.dep *.brf *.thm *.nls *.ilg *.spl *.lof *.fff *.xdv *.blg *.abs *.nlo *.bcf *.out *.toc *.aux *.log *synctex.gz *.nav *.snm *latexmk *.fls *.bbl
+
+echo "--- Running Matteo Icardi's handy script: cleanlatex ---"
+echo "Cleaning LaTeX intermediate files..."
+rm -f ./*.dep ./*.brf ./*.thm ./*.nls ./*.ilg ./*.spl ./*.lof ./*.fff ./*.xdv ./*.blg ./*.abs ./*.nlo ./*.bcf ./*.out ./*.toc ./*.aux ./*.log ./*synctex.gz ./*.nav ./*.snm ./*latexmk ./*.fls ./*.bbl
+
+echo "Done."

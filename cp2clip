@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
 # cp2clip - copy to the clipboard the contents of a file
+echo "--- Running Matteo Icardi's handy script: cp2clip ---"
 
-cat $1 | pbcopy
+if [ -z "$1" ]; then
+    echo "Usage: $(basename "$0") <file>"
+    exit 1
+fi
+
+pbcopy < "$1"
