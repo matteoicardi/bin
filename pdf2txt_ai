@@ -4,7 +4,7 @@ set -e
 echo "--- Running Matteo Icardi's handy script: pdf2txt_ai ---"
 
 # Check dependencies
-for cmd in pdftoppm tesseract; do
+for cmd in pdftoppm tesseract magick; do
     if ! command -v "$cmd" &> /dev/null; then
         echo "Error: '$cmd' is not installed." >&2
         exit 1
@@ -24,11 +24,13 @@ WORKDIR="$(mktemp -d)"
 echo "Converting PDF to images..."
 pdftoppm -r 300 -gray "$PDF" "$WORKDIR/page"
 
-# 2. OCR each page (PSM 6 = uniform blocks, best for boxes/forms)
+# 2. Deskew + OCR each page (PSM 4 = single column, skew-tolerant)
 echo "Performing OCR (this may take a while)..."
 for img in "$WORKDIR"/page-*.pgm; do
+  magick "$img" -deskew 40% "$img"
   tesseract "$img" "${img%.pgm}" \
-    --psm 6 \
+    --psm 4 \
+    -c textord_heavy_nr=1 \
     -l eng+ita \
     txt > /dev/null 2>&1
 done

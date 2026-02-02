@@ -4,7 +4,7 @@ set -e
 echo "--- Running Matteo Icardi's handy script: pdf2txt_ai_raw ---"
 
 # Check dependencies
-for cmd in pdftoppm tesseract; do
+for cmd in pdftoppm tesseract magick; do
     if ! command -v "$cmd" &> /dev/null; then
         echo "Error: '$cmd' is not installed." >&2
         exit 1
@@ -21,15 +21,20 @@ BASENAME="$(basename "$PDF" .pdf)"
 WORKDIR="$(mktemp -d)"
 
 echo "Converting PDF to images (High Res)..."
-pdftoppm -r 400 "$PDF" "$WORKDIR/page"
+pdftoppm -r 450 -gray "$PDF" "$WORKDIR/page"
 
-echo "Performing OCR (Raw Stream)..."
+echo "Performing OCR (Aggressive rescue mode)..."
 # Clear output file if exists
 > "${BASENAME}.txt"
 
-for img in "$WORKDIR"/page-*.ppm; do
+for img in "$WORKDIR"/page-*.pgm; do
+  magick "$img" -deskew 60% "$img"
+  magick "$img" -normalize -contrast-stretch 1%x1% "$img"
+  magick "$img" -sharpen 0x1 "$img"
   tesseract "$img" stdout \
-    --psm 11 \
+    --psm 1 \
+    -c textord_heavy_nr=1 \
+    -c preserve_interword_spaces=1 \
     -l eng+ita \
     2>/dev/null >> "${BASENAME}.txt"
   echo -e "\n\n----- PAGE BREAK -----\n\n" >> "${BASENAME}.txt"
