@@ -106,13 +106,10 @@ print(s)
 PY
  )"
 
-  out_dir="$OUTDIR/$uploader"
-  mkdir -p "$out_dir"
-
   if [[ -n "$safe" ]]; then
-    out="$out_dir/${safe}.txt"
+    out="$OUTDIR/${safe}.txt"
   else
-    out="$out_dir/${id}.txt"
+    out="$OUTDIR/${id}.txt"
   fi
 
   awk -f - "$vtt" > "$out" <<'AWK'

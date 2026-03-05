@@ -61,7 +61,7 @@ common_args=(
   --extract-audio
   --audio-format "$AUDIO_FORMAT"
   --audio-quality "$AUDIO_Q"
-  --output "$OUTDIR/%(uploader)s/%(title).200B.%(ext)s"
+  --output "$OUTDIR/%(title).200B.%(ext)s"
 )
 
 download_one() {

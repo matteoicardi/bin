@@ -14,18 +14,21 @@ Arguments:
 
 Environment Variables:
   OUTDIR              Directory where videos will be saved.
-                      Default: \$(pwd)/videos
+                      Default: $(pwd)/videos
   ARCHIVE             Path to the download archive file to avoid re-downloads.
-                      Default: \$OUTDIR/archive.txt
+                      Default: $OUTDIR/archive.txt
+  HIGH_COMPAT         Set to 'true' for maximum compatibility (H.264/AAC).
+                      Fixes issues with QuickTime/macOS.
+                      Default: false
   FORMAT              yt-dlp format selector string.
                       Default: bestvideo[height<=720]+bestaudio...
 
 Output Structure:
-  \$OUTDIR/<Uploader>/<Title>.<ext>
+  $OUTDIR/<Title>.<ext>
 
 Examples:
   $(basename "$0") "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-  OUTDIR=~/Videos $(basename "$0") list.txt
+  HIGH_COMPAT=true $(basename "$0") list.txt
 EOF
   exit 0
 }
@@ -37,13 +40,20 @@ fi
 INPUT="$1"
 OUTDIR="${OUTDIR:-$(pwd)/videos}"
 ARCHIVE="${ARCHIVE:-$OUTDIR/archive.txt}"
+HIGH_COMPAT="${HIGH_COMPAT:-false}"
 
 mkdir -p "$OUTDIR"
 
 # Conservative “medium” target:
 # - Prefer 720p or below (good balance size/quality)
 # - Falls back gracefully if 720p not available
-FORMAT="${FORMAT:-bestvideo[height<=720][vcodec!*=av01]+bestaudio/best[height<=720]/best}"
+if [[ "$HIGH_COMPAT" == "true" ]]; then
+  # Force H.264 and AAC for QuickTime/macOS compatibility
+  FORMAT="bestvideo[height<=720][vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[height<=720][vcodec^=avc1]/best"
+else
+  # Prefer VP9/WebM (smaller/better) but allow merging to MP4
+  FORMAT="${FORMAT:-bestvideo[height<=720][vcodec!*=av01]+bestaudio/best[height<=720]/best}"
+fi
 
 common_args=(
   --ignore-errors
@@ -58,9 +68,10 @@ common_args=(
   --write-thumbnail
   --write-info-json
   --merge-output-format mp4
-  --output "$OUTDIR/%(uploader)s/%(title).200B.%(ext)s"
+  --output "$OUTDIR/%(title).200B.%(ext)s"
   -f "$FORMAT"
 )
+
 
 download_one() {
   local url="$1"
