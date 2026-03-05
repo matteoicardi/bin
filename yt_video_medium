@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") <youtube_url | file_with_urls>
+
+Downloads YouTube videos in 720p (medium) resolution.
+
+Arguments:
+  <youtube_url>       A direct link to a YouTube video or playlist.
+  <file_with_urls>    A text file containing one YouTube URL per line.
+                      Lines starting with '#' are ignored.
+
+Environment Variables:
+  OUTDIR              Directory where videos will be saved.
+                      Default: \$(pwd)/videos
+  ARCHIVE             Path to the download archive file to avoid re-downloads.
+                      Default: \$OUTDIR/archive.txt
+  FORMAT              yt-dlp format selector string.
+                      Default: bestvideo[height<=720]+bestaudio...
+
+Output Structure:
+  \$OUTDIR/<Uploader>/<Title>.<ext>
+
+Examples:
+  $(basename "$0") "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  OUTDIR=~/Videos $(basename "$0") list.txt
+EOF
+  exit 0
+}
+
+if [[ $# -lt 1 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  usage
+fi
+
+INPUT="$1"
+OUTDIR="${OUTDIR:-$(pwd)/videos}"
+ARCHIVE="${ARCHIVE:-$OUTDIR/archive.txt}"
+
+mkdir -p "$OUTDIR"
+
+# Conservative “medium” target:
+# - Prefer 720p or below (good balance size/quality)
+# - Falls back gracefully if 720p not available
+FORMAT="${FORMAT:-bestvideo[height<=720][vcodec!*=av01]+bestaudio/best[height<=720]/best}"
+
+common_args=(
+  --ignore-errors
+  --continue
+  --no-overwrites
+  --retries 10
+  --fragment-retries 10
+  --concurrent-fragments 4
+  --download-archive "$ARCHIVE"
+  --add-metadata
+  --embed-thumbnail
+  --write-thumbnail
+  --write-info-json
+  --merge-output-format mp4
+  --output "$OUTDIR/%(uploader)s/%(title).200B.%(ext)s"
+  -f "$FORMAT"
+)
+
+download_one() {
+  local url="$1"
+  yt-dlp "${common_args[@]}" "$url"
+}
+
+# ---- main ----
+if [[ -f "$INPUT" ]]; then
+  while IFS= read -r url; do
+    [[ -z "$url" ]] && continue
+    [[ "$url" =~ ^[[:space:]]*# ]] && continue
+    download_one "$url"
+  done < "$INPUT"
+else
+  download_one "$INPUT"
+fi
+
+echo "Done. Output: $OUTDIR"

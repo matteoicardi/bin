@@ -1,9 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <youtube_url | file_with_urls>"
-  exit 1
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") <youtube_url | file_with_urls>
+
+Downloads YouTube transcripts/subtitles and converts them to plain text.
+
+Arguments:
+  <youtube_url>       A direct link to a YouTube video or playlist.
+  <file_with_urls>    A text file containing one YouTube URL per line.
+                      Lines starting with '#' are ignored.
+
+Environment Variables:
+  OUTDIR              Directory where transcripts will be saved.
+                      Default: \$(pwd)/transcripts
+  ARCHIVE             Path to the download archive file to avoid re-downloads.
+                      Default: \$OUTDIR/archive.txt
+  SUB_LANG            Language tag to download (e.g. 'en', 'it').
+                      Default: Your current locale language (\${LANG})
+
+Output Structure:
+  \$OUTDIR/<Uploader>/<Title>.txt
+
+Examples:
+  $(basename "$0") "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  SUB_LANG=en $(basename "$0") playlist_urls.txt
+EOF
+  exit 0
+}
+
+if [[ $# -lt 1 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  usage
 fi
 
 INPUT="$1"
@@ -12,6 +40,7 @@ DEFAULT_LOCALE_LANG="${DEFAULT_LOCALE_LANG%%_*}"
 DEFAULT_LOCALE_LANG="${DEFAULT_LOCALE_LANG%%.*}"
 SUB_LANG="${SUB_LANG:-$DEFAULT_LOCALE_LANG}"
 OUTDIR="${OUTDIR:-$(pwd)/transcripts}"
+ARCHIVE="${ARCHIVE:-$OUTDIR/archive.txt}"
 TMPDIR="$(mktemp -d)"
 
 mkdir -p "$OUTDIR"
@@ -25,6 +54,7 @@ download_subs() {
   yt-dlp \
     --ignore-errors \
     --skip-download \
+    --download-archive "$ARCHIVE" \
     --write-info-json \
     --write-subs \
     --write-auto-subs \
@@ -36,38 +66,31 @@ download_subs() {
 
 vtt_to_txt() {
   local vtt="$1"
-  local fname id lang infojson title safe out
+  local fname id lang infojson title uploader upload_date safe out_dir out
 
   fname="$(basename "$vtt")"
 
-  # Extract YouTube video id from filenames like:
-  #   <id>.vtt
-  #   <id>.<lang>.vtt
-  #   <id>.<lang>.<something>.vtt
+  # Extract YouTube video id
   id="${fname%%.*}"
-
-  # Try to infer language tag (purely informational)
-  lang=""
-  if [[ "$fname" =~ ^${id}\.([a-zA-Z-]+)\.vtt$ ]]; then
-    lang="${BASH_REMATCH[1]}"
-  fi
 
   infojson="$TMPDIR/${id}.info.json"
 
-  # Read title from infojson; fall back to id if missing.
-  title="$(python3 - "$infojson" <<'PY'
+  # Read metadata from infojson
+  IFS='|' read -r uploader upload_date title <<EOF
+$(python3 - "$infojson" <<'PY'
 import sys, json, pathlib
 p = pathlib.Path(sys.argv[1])
 if p.exists():
-  try:
-    d = json.loads(p.read_text(encoding='utf-8', errors='replace'))
-    print(d.get('title') or d.get('fulltitle') or "")
-  except Exception:
-    print("")
+    try:
+        d = json.loads(p.read_text(encoding='utf-8', errors='replace'))
+        print(f"{d.get('uploader', 'Unknown')}|{d.get('upload_date', '00000000')}|{d.get('title') or d.get('fulltitle') or ''}")
+    except Exception:
+        print("Unknown|00000000|")
 else:
-  print("")
+    print("Unknown|00000000|")
 PY
-)"
+)
+EOF
 
   # Sanitize title for macOS filenames.
   safe="$(python3 - "$id" "$title" <<'PY'
@@ -75,22 +98,21 @@ import sys, re
 id = sys.argv[1]
 title = sys.argv[2]
 s = title or id
-# Replace path separators and other annoying characters
 s = s.replace('/', '-').replace('\\', '-').replace(':', ' - ')
-# Collapse whitespace
 s = re.sub(r"\s+", " ", s).strip()
-# Remove characters that commonly cause issues
 s = re.sub(r"[\000-\037]", "", s)
-# Keep it reasonably short
 s = s[:200].rstrip()
 print(s)
 PY
  )"
 
+  out_dir="$OUTDIR/$uploader"
+  mkdir -p "$out_dir"
+
   if [[ -n "$safe" ]]; then
-    out="$OUTDIR/${safe} [${id}].txt"
+    out="$out_dir/${safe}.txt"
   else
-    out="$OUTDIR/${id}.txt"
+    out="$out_dir/${id}.txt"
   fi
 
   awk -f - "$vtt" > "$out" <<'AWK'
