@@ -17,18 +17,21 @@ Environment Variables:
                       Default: $(pwd)/videos
   ARCHIVE             Path to the download archive file to avoid re-downloads.
                       Default: $OUTDIR/archive.txt
-  HIGH_COMPAT         Set to 'true' for maximum compatibility (H.264/AAC).
-                      Fixes issues with QuickTime/macOS.
-                      Default: false
-  FORMAT              yt-dlp format selector string.
-                      Default: bestvideo[height<=720]+bestaudio...
+  VIDEO_Q             Quality/Compatibility level:
+                        0: Max Compatibility (H.264/AAC). Default.
+                           Works in QuickTime, iPhone, and old devices.
+                        1: High Efficiency (VP9).
+                           Smaller files, better quality, needs VLC/Chrome.
+                        2: Ultimate Efficiency (AV1/VP9).
+                           Newest codecs, best quality, needs modern VLC.
+  FORMAT              Manual yt-dlp format selector (overrides VIDEO_Q).
 
 Output Structure:
   $OUTDIR/<Title>.<ext>
 
 Examples:
   $(basename "$0") "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-  HIGH_COMPAT=true $(basename "$0") list.txt
+  VIDEO_Q=1 $(basename "$0") list.txt
 EOF
   exit 0
 }
@@ -40,19 +43,23 @@ fi
 INPUT="$1"
 OUTDIR="${OUTDIR:-$(pwd)/videos}"
 ARCHIVE="${ARCHIVE:-$OUTDIR/archive.txt}"
-HIGH_COMPAT="${HIGH_COMPAT:-false}"
+VIDEO_Q="${VIDEO_Q:-0}"
 
 mkdir -p "$OUTDIR"
 
-# Conservative “medium” target:
-# - Prefer 720p or below (good balance size/quality)
-# - Falls back gracefully if 720p not available
-if [[ "$HIGH_COMPAT" == "true" ]]; then
-  # Force H.264 and AAC for QuickTime/macOS compatibility
-  FORMAT="bestvideo[height<=720][vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[height<=720][vcodec^=avc1]/best"
+# Select format based on quality level
+if [[ -n "${FORMAT:-}" ]]; then
+    # Use user-provided format if set
+    SELECTED_FORMAT="$FORMAT"
+elif [[ "$VIDEO_Q" == "0" ]]; then
+    # Level 0: H.264 + AAC (MP4) - Best for Apple/QuickTime
+    SELECTED_FORMAT="bestvideo[height<=720][vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[height<=720][vcodec^=avc1]/best"
+elif [[ "$VIDEO_Q" == "1" ]]; then
+    # Level 1: Prefer VP9, exclude AV1 (MP4/WebM)
+    SELECTED_FORMAT="bestvideo[height<=720][vcodec!*=av01]+bestaudio/best[height<=720]/best"
 else
-  # Prefer VP9/WebM (smaller/better) but allow merging to MP4
-  FORMAT="${FORMAT:-bestvideo[height<=720][vcodec!*=av01]+bestaudio/best[height<=720]/best}"
+    # Level 2: Pure "best" up to 720p (includes AV1)
+    SELECTED_FORMAT="bestvideo[height<=720]+bestaudio/best[height<=720]/best"
 fi
 
 common_args=(
@@ -69,7 +76,7 @@ common_args=(
   --write-info-json
   --merge-output-format mp4
   --output "$OUTDIR/%(title).200B.%(ext)s"
-  -f "$FORMAT"
+  -f "$SELECTED_FORMAT"
 )
 
 
