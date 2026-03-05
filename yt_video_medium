@@ -87,11 +87,11 @@ download_one() {
 
 # ---- main ----
 if [[ -f "$INPUT" ]]; then
+  # Extract all YouTube URLs from the file, ignoring comments/text
   while IFS= read -r url; do
     [[ -z "$url" ]] && continue
-    [[ "$url" =~ ^[[:space:]]*# ]] && continue
     download_one "$url"
-  done < "$INPUT"
+  done < <(extract_yt_urls "$INPUT")
 else
   download_one "$INPUT"
 fi

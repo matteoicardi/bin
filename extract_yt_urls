@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [file | -]
+
+Extracts unique YouTube URLs from a file or standard input.
+
+Examples:
+  $(basename "$0") notes.txt
+  curl -s "https://example.com" | $(basename "$0")
+EOF
+  exit 0
+}
+
+if [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+  usage
+fi
+
+# Regex for common YouTube patterns:
+# - youtube.com/watch?v=...
+# - youtu.be/...
+# - youtube.com/shorts/...
+# - youtube.com/v/...
+# - youtube.com/embed/...
+YT_REGEX='(https?://)?(www\.)?(youtube\.com|youtu\.be)/(watch\?v=|shorts/|v/|embed/|playlist\?list=)?([a-zA-Z0-9_-]{11,})(&[a-zA-Z0-9_=-]*)?'
+
+# Process input (file or stdin)
+grep -Eiho "$YT_REGEX" "${1:-/dev/stdin}" | sort -u
