@@ -82,7 +82,7 @@ common_args=(
 
 download_one() {
   local url="$1"
-  yt-dlp "${common_args[@]}" "$url"
+  yt-dlp "${common_args[@]}" "$url" || true
 }
 
 # ---- main ----

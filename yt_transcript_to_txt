@@ -61,7 +61,7 @@ download_subs() {
     --sub-lang "$SUB_LANG" \
     --sub-format vtt \
     --output "$TMPDIR/%(id)s.%(ext)s" \
-    "$url"
+    "$url" || true
 }
 
 vtt_to_txt() {
