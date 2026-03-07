@@ -51,7 +51,7 @@ trap cleanup EXIT
 download_subs() {
   local url="$1"
 
-  yt-dlp \
+  yt-dlp --cookies-from-browser safari \
     --ignore-errors \
     --skip-download \
     --download-archive "$ARCHIVE" \
