@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") <youtube_url | file_with_urls>
+
+Downloads audio from YouTube videos and converts them to MP3.
+
+Arguments:
+  <youtube_url>       A direct link to a YouTube video or playlist.
+  <file_with_urls>    A text file containing one YouTube URL per line.
+                      Lines starting with '#' are ignored.
+
+Environment Variables:
+  OUTDIR              Directory where audio files will be saved.
+                      Default: \$(pwd)/audio
+  ARCHIVE             Path to the download archive file to avoid re-downloads.
+                      Default: \$OUTDIR/archive.txt
+  AUDIO_Q             MP3 quality (0=best, 9=worst).
+                      Default: 2
+  AUDIO_FORMAT        Target audio format.
+                      Default: mp3
+
+Output Structure:
+  \$OUTDIR/<Uploader>/<Title>.<ext>
+
+Examples:
+  $(basename "$0") "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  OUTDIR=~/Music $(basename "$0") urls.txt
+EOF
+  exit 0
+}
+
+if [[ $# -lt 1 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  usage
+fi
+
+INPUT="$1"
+OUTDIR="${OUTDIR:-$(pwd)/audio}"
+ARCHIVE="${ARCHIVE:-$OUTDIR/archive.txt}"
+
+# MP3 settings (reasonable quality/size balance)
+AUDIO_Q="${AUDIO_Q:-2}"     # 0(best)..9(worst) for libmp3lame VBR
+AUDIO_FORMAT="${AUDIO_FORMAT:-mp3}"
+
+mkdir -p "$OUTDIR"
+
+common_args=(
+  --ignore-errors
+  --continue
+  --no-overwrites
+  --retries 10
+  --fragment-retries 10
+  --concurrent-fragments 4
+  --download-archive "$ARCHIVE"
+  --add-metadata
+  --embed-thumbnail
+  --write-thumbnail
+  --write-info-json
+  --extract-audio
+  --audio-format "$AUDIO_FORMAT"
+  --audio-quality "$AUDIO_Q"
+  --output "$OUTDIR/%(title).200B.%(ext)s"
+)
+
+download_one() {
+  local url="$1"
+  yt-dlp --cookies-from-browser safari  "${common_args[@]}" "$url" || true
+}
+
+# ---- main ----
+if [[ -f "$INPUT" ]]; then
+  # Extract all YouTube URLs from the file, ignoring comments/text
+  while IFS= read -r url; do
+    [[ -z "$url" ]] && continue
+    download_one "$url"
+  done < <(extract_yt_urls "$INPUT")
+else
+  download_one "$INPUT"
+fi
+
+echo "Done. Output: $OUTDIR"
