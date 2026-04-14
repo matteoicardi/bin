@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <kartra_post_url> <vimeo_player_url>"
+  exit 1
+fi
+
+POST_URL="$1"
+VIMEO_URL="$2"
+
+yt-dlp \
+  --cookies-from-browser safari \
+  --limit-rate 1M \
+  --concurrent-fragments 1 \
+  --sleep-interval 2 \
+  --max-sleep-interval 5 \
+  --referer "$POST_URL" \
+  "$VIMEO_URL"
