@@ -10,6 +10,8 @@ POST_URL="$1"
 VIMEO_URL="$2"
 
 yt-dlp \
+  -f "bestvideo+bestaudio" \
+  --merge-output-format mp4 \
   --cookies-from-browser safari \
   --limit-rate 1M \
   --concurrent-fragments 1 \
