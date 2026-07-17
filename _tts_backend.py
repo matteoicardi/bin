@@ -28,7 +28,15 @@ def detect_voice(text):
         return DEFAULT_VOICE
 
 async def run_speak(args):
-    if len(args) > 0:
+    if len(args) == 1 and os.path.isfile(args[0]):
+        print(f"[tts] Reading input file: {args[0]}", file=sys.stderr)
+        try:
+            with open(args[0], 'r', encoding='utf-8') as f:
+                text = f.read().strip()
+        except Exception as e:
+            print(f"[tts] Error reading file {args[0]}: {e}", file=sys.stderr)
+            return
+    elif len(args) > 0:
         text = " ".join(args)
     else:
         text = sys.stdin.read().strip()
@@ -36,6 +44,10 @@ async def run_speak(args):
     if not text:
         print("[tts] No text provided.", file=sys.stderr)
         return
+
+    # Debug snippet of the text
+    snippet = text[:60].replace('\n', ' ')
+    print(f"[tts] Text to speak: '{snippet}...' ({len(text)} chars)", file=sys.stderr)
 
     voice = detect_voice(text)
     
@@ -55,12 +67,20 @@ async def run_speak(args):
 
 async def run_tts(args):
     if len(args) < 1:
-        print("Usage: tts output.mp3 [text]", file=sys.stderr)
+        print("Usage: tts output.mp3 [text/file]", file=sys.stderr)
         sys.exit(1)
         
     output_path = args[0]
     
-    if len(args) > 1:
+    if len(args) == 2 and os.path.isfile(args[1]):
+        print(f"[tts] Reading input file: {args[1]}", file=sys.stderr)
+        try:
+            with open(args[1], 'r', encoding='utf-8') as f:
+                text = f.read().strip()
+        except Exception as e:
+            print(f"[tts] Error reading file {args[1]}: {e}", file=sys.stderr)
+            sys.exit(1)
+    elif len(args) > 1:
         text = " ".join(args[1:])
     else:
         text = sys.stdin.read().strip()
@@ -68,6 +88,10 @@ async def run_tts(args):
     if not text:
         print("Error: No text provided.", file=sys.stderr)
         sys.exit(1)
+
+    # Debug snippet of the text
+    snippet = text[:60].replace('\n', ' ')
+    print(f"[tts] Text to synthesize: '{snippet}...' ({len(text)} chars)", file=sys.stderr)
 
     voice = detect_voice(text)
     
