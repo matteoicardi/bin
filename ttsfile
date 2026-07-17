@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage: ttsfile <file>" >&2
+    exit 1
+fi
+
+IN="$1"
+if [[ ! -f "$IN" ]]; then
+    echo "Error: File '$IN' not found." >&2
+    exit 1
+fi
+
+OUT="${IN%.*}.mp3"
+tts "$OUT" < "$IN"

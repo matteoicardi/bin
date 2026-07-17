@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Execute Python backend in speak mode
+"/Users/pmzmi1/Library/Application Support/pipx/venvs/edge-tts/bin/python" "/Users/pmzmi1/bin/_tts_backend.py" speak "$@"
