@@ -25,6 +25,7 @@ Environment Variables:
                         2: Ultimate Efficiency (AV1/VP9).
                            Newest codecs, best quality, needs modern VLC.
   FORMAT              Manual yt-dlp format selector (overrides VIDEO_Q).
+  NO_SUBS             Set to '1' to disable downloading and embedding subtitles.
 
 Output Structure:
   $OUTDIR/<Title>.<ext>
@@ -44,6 +45,7 @@ INPUT="$1"
 OUTDIR="${OUTDIR:-$(pwd)/videos}"
 ARCHIVE="${ARCHIVE:-$OUTDIR/archive.txt}"
 VIDEO_Q="${VIDEO_Q:-0}"
+NO_SUBS="${NO_SUBS:-0}"
 
 mkdir -p "$OUTDIR"
 
@@ -79,10 +81,18 @@ common_args=(
   -f "$SELECTED_FORMAT"
 )
 
+if [[ "$NO_SUBS" != "1" ]] && [[ "$NO_SUBS" != "true" ]]; then
+  common_args+=(
+    --write-auto-sub
+    --write-sub
+    --sub-lang "en.*"
+    --embed-subs
+  )
+fi
 
 download_one() {
   local url="$1"
-  yt-dlp --cookies-from-browser safari "${common_args[@]}" "$url" || true
+  /Users/pmzmi1/bin/yt-dlp --cookies-from-browser safari "${common_args[@]}" "$url" || true
 }
 
 # ---- main ----
