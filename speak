@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Execute Python backend in speak mode
-"/Users/pmzmi1/Library/Application Support/pipx/venvs/edge-tts/bin/python" "/Users/pmzmi1/bin/_tts_backend.py" speak "$@"
+PYTHON_BIN="$HOME/.local/pipx/venvs/edge-tts/bin/python"
+if [[ ! -x "$PYTHON_BIN" ]]; then
+    PYTHON_BIN="$HOME/Library/Application Support/pipx/venvs/edge-tts/bin/python"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$PYTHON_BIN" "$SCRIPT_DIR/_tts_backend.py" speak "$@"
