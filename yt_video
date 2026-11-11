@@ -85,10 +85,15 @@ if [[ "$NO_SUBS" != "1" ]] && [[ "$NO_SUBS" != "true" ]]; then
   common_args+=(
     --write-auto-sub
     --write-sub
-    --sub-lang "en.*"
+    --sub-lang "en-GB,en"
     --embed-subs
   )
 fi
+
+extract_yt_urls() {
+  # YouTube URLs from a text file, one per match; '#' comment lines skipped
+  grep -v '^[[:space:]]*#' "$1" | grep -oE 'https?://(www\.|m\.)?(youtube\.com|youtu\.be)/[^[:space:]<>"'"'"')]+' || true
+}
 
 download_one() {
   local url="$1"
