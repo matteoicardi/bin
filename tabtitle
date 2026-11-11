@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Rename the active iTerm2 tab (pure iTerm2 or tmux iTerm2 / control mode)
+# Usage:
+#   tabtitle <name>         # Set tab/window title
+#   tabtitle -a | --auto    # Reset back to automatic title (in tmux)
+
+set -euo pipefail
+
+TMUX_BIN="$(command -v tmux 2>/dev/null || echo "/opt/homebrew/bin/tmux")"
+
+if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  echo "Usage: $(basename "$0") <title>"
+  echo "       $(basename "$0") -a | --auto   (reset to automatic title in tmux)"
+  exit 0
+fi
+
+if [ "$1" = "-a" ] || [ "$1" = "--auto" ]; then
+  if [ -n "${TMUX:-}" ] && [ -x "$TMUX_BIN" ]; then
+    "$TMUX_BIN" set-window-option automatic-rename on
+    echo "Restored automatic tmux window title."
+  else
+    printf "\033]0;\007"
+  fi
+  exit 0
+fi
+
+TITLE="$*"
+
+# 1. If running inside tmux (including iTerm2 -CC control mode)
+if [ -n "${TMUX:-}" ] && [ -x "$TMUX_BIN" ]; then
+  "$TMUX_BIN" rename-window -- "$TITLE"
+fi
+
+# 2. Standard terminal escape sequences (pure iTerm2, Terminal.app)
+# OSC 0 sets both window and icon/tab title
+# OSC 1 sets icon/tab title
+# OSC 2 sets window title
+printf "\033]0;%s\007" "$TITLE"
+printf "\033]1;%s\007" "$TITLE"
+printf "\033]2;%s\007" "$TITLE"
+
+# 3. If inside tmux with allow-passthrough on, also pass through OSC 0 directly to iTerm2
+if [ -n "${TMUX:-}" ]; then
+  printf "\033Ptmux;\033\033]0;%s\007\033\\" "$TITLE" 2>/dev/null || true
+fi
