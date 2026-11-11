@@ -16,7 +16,7 @@ fi
 
 if [ "$1" = "-a" ] || [ "$1" = "--auto" ]; then
   if [ -n "${TMUX:-}" ] && [ -x "$TMUX_BIN" ]; then
-    "$TMUX_BIN" set-window-option automatic-rename on
+    "$TMUX_BIN" set-window-option ${TMUX_PANE:+-t "$TMUX_PANE"} automatic-rename on
     echo "Restored automatic tmux window title."
   else
     printf "\033]0;\007"
@@ -28,7 +28,10 @@ TITLE="$*"
 
 # 1. If running inside tmux (including iTerm2 -CC control mode)
 if [ -n "${TMUX:-}" ] && [ -x "$TMUX_BIN" ]; then
-  "$TMUX_BIN" rename-window -- "$TITLE"
+  # Target the window this shell runs in, not the client's active window
+  # (they differ when an agent runs this from a background shell).
+  "$TMUX_BIN" rename-window ${TMUX_PANE:+-t "$TMUX_PANE"} -- "$TITLE"
+  "$TMUX_BIN" select-pane ${TMUX_PANE:+-t "$TMUX_PANE"} -T "$TITLE"
 fi
 
 # 2. Standard terminal escape sequences (pure iTerm2, Terminal.app)
