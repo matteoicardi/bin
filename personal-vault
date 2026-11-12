@@ -1,0 +1,38 @@
+#!/bin/bash
+# Encrypted archive at ~/iCloud/Personal.sparsebundle.
+# The passphrase is typed into the system dialog. It is not stored here or in Keychain.
+set -euo pipefail
+IMG="$HOME/iCloud/Personal.sparsebundle"
+MOUNT="/Volumes/Personal"
+
+case "${1:-}" in
+create)
+    if [[ -e "$IMG" ]]; then
+        echo "Already there: $IMG"
+        exit 1
+    fi
+    echo "Set a password in the prompt. If a box offers to remember it in Keychain, leave that unticked."
+    hdiutil create -type SPARSEBUNDLE -size 20g -fs APFS -encryption AES-256 -volname Personal "$IMG"
+    echo "Created $IMG. Use the lock icon in the menu bar to open it."
+    ;;
+open|unlock)
+    hdiutil attach "$IMG"
+    open "$MOUNT"
+    ;;
+close|lock)
+    hdiutil detach "$MOUNT"
+    ;;
+status)
+    if [[ -d "$MOUNT" ]]; then
+        echo "open: $MOUNT"
+    elif [[ -e "$IMG" ]]; then
+        echo "locked: $IMG"
+    else
+        echo "not created"
+    fi
+    ;;
+*)
+    echo "Usage: personal-vault create|open|close|status"
+    exit 1
+    ;;
+esac
